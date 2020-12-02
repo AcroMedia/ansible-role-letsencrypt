@@ -1,0 +1,23 @@
+- name:Install nginx
+  become: no
+  gather_facts: yes
+  tasks:
+
+    - name: Update yum
+      yum:
+        update_cache: yes
+      when: ansible_os_family == 'RedHat'
+
+    - name: Install nginx for RedHat
+      package:
+        name:
+          - nginx
+        state: present
+      when: ansible_os_family == 'RedHat'
+
+    - name: Install nginx
+      apt:
+        name: nginx
+        update_cache: yes
+        state: present
+      when: ansible_os_family == 'Ubuntu'
