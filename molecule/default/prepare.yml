@@ -1,4 +1,6 @@
-- name:Install nginx
+- name: Install nginx
+  hosts: localhost
+  connection: local
   become: no
   gather_facts: yes
   tasks:
@@ -8,16 +10,16 @@
         update_cache: yes
       when: ansible_os_family == 'RedHat'
 
-    - name: Install nginx for RedHat
+    - name: Ensure nginx is isntalled
       package:
         name:
           - nginx
         state: present
       when: ansible_os_family == 'RedHat'
 
-    - name: Install nginx
+    - name: Ensure nginx is isntalled
       apt:
-        name: nginx
-        update_cache: yes
+        name:
+          - nginx
         state: present
       when: ansible_os_family == 'Ubuntu'
