@@ -17,11 +17,17 @@
         state: present
       when: ansible_os_family == 'RedHat'
 
+    - name: Ensure python is installed
+      package:
+        name:
+          - python
+        state: present
+      when: ansible_os_family == 'RedHat'
 
-    - name: Ensure nginx is installed
+    - name: Ensure nginx is installed for Debian
       apt: pkg=nginx state=present update_cache=true
       when: ansible_os_family == 'Debian'
 
-    - name: Ensure python is installed
+    - name: Ensure python is installed for Debian
       apt: pkg=python state=present update_cache=true
       when: ansible_os_family == 'Debian'
