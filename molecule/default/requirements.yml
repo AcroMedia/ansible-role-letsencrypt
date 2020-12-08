@@ -1,6 +1,6 @@
 ---
 
-- name: contrib/acromedia.postfix
+- name: contrib/acromedia.nginx
   src: https://github.com/AcroMedia/ansible-role-nginx
   version: origin/master
 
