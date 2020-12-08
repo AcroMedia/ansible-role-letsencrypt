@@ -4,7 +4,8 @@
   become: true
 
   vars:
-    - default_mail_recipient: webmaster@acromedia.com
+    - default_mail_recipient: webmaster@xyz.com
+    - letsencrypt_install_certbot_from_ppa: true
 
   roles:
     - role: ansible-role-letsencrypt
