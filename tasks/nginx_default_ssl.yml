@@ -5,4 +5,6 @@
     dest: "{{ nginx_vhost_conf_dir }}/{{ nginx_default_vhost_filename }}"
     backup: yes
   notify: reload nginx
-  when: default_cert_retest.rc == 0
+  when: default_cert_retest is defined
+    and default_cert_retest.stat is defined
+    and default_cert_retest.stat.exists

@@ -1,0 +1,4 @@
+---
+default_mail_recipient: webmaster@example.com
+letsencrypt_create_default_server_cert: false
+letsencrypt_molecule_mock_mode: true

@@ -111,10 +111,9 @@
     creates: /usr/local/ssl/private/dhparams.pem
 
 - name: Stat the default site SSL cert
-  shell: "test -e /etc/letsencrypt/live/{{ default_site_fqdn }}"
+  stat:
+    path: "/etc/letsencrypt/live/{{ default_site_fqdn }}"
   register: default_cert_result
-  changed_when: "default_cert_result.rc != 0"
-  ignore_errors: true
 
 - name: Compose the certbot command string for the default site cert
   set_fact:
@@ -132,16 +131,17 @@
     {{ certbot_command_string }} --dry-run && {{ certbot_command_string }}
   register: certbot_result
   when: default_cert_result is defined
-    and default_cert_result.rc is defined
-    and default_cert_result.rc != 0
+    and default_cert_result.exists is defined
+    and (not default_cert_result.exists)
+    and (not letsencrypt_molecule_mock_mode)
   environment:
     DEBIAN_FRONTEND: noninteractive
 
 - name: Re-stat default site SSL cert
-  shell: "test -e /etc/letsencrypt/live/{{ default_site_fqdn }}"
+  stat:
+    path: "/etc/letsencrypt/live/{{ default_site_fqdn }}"
   register: default_cert_retest
-  ignore_errors: true
-  changed_when: default_cert_retest.rc != default_cert_result.rc
 
 - name: Run {{ letsencrypt_webserver }}_default_ssl.yml playbook
   include: "{{ letsencrypt_webserver }}_default_ssl.yml"
+  when: not letsencrypt_molecule_mock_mode

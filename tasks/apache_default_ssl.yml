@@ -11,8 +11,8 @@
     backup: true
   notify: restart apache
   when: default_cert_retest is defined
-    and default_cert_retest.rc is defined
-    and default_cert_retest.rc == 0
+    and default_cert_retest.stat is defined
+    and default_cert_retest.stat.exists
 
 - name: Disable the factory default site on EL Apache 2.2 (we already set up in the welcome file)
   template:
@@ -21,7 +21,7 @@
     backup: true
   notify: restart apache
   when: default_cert_retest is defined
-    and default_cert_retest.rc is defined
-    and default_cert_retest.rc == 0
+    and default_cert_retest.stat is defined
+    and default_cert_retest.stat.exists
     and ansible_os_family == 'RedHat'
     and apache_version is version('2.4.0', '<' )

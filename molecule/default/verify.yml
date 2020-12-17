@@ -1,0 +1,17 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Trivailly execute the certbot script, just to make sure it's present,
+        but only call it with the --help flag, so it does not try to do any work.
+        The certbot-auto script is no longer supported, and has been replaced
+        by snapd. This upgrade will be addressed in a new pull request.
+      shell: /usr/local/bin/certbot-auto --help
+      register: certbot_result
+
+    - name: Ensure output looks as expected
+      assert:
+        that:
+          '"A self-updating wrapper script for the Certbot ACME client." in certbot_result.stdout'

@@ -26,3 +26,9 @@ letsencrypt_renew_cron_day: "*"
 letsencrypt_webroot: /var/www/letsencrypt
 
 letsencrypt_install_certbot_from_ppa: false
+
+# Since molecule tests cannot actually run with valid DNS, or even listen for
+# external connections on port 80, we need to be able to simulate some pieces
+# of the letsencrypt process in order to check the rest of the moving parts of the role.
+# This variable should only ever be used by molecule tests.
+letsencrypt_molecule_mock_mode: false

@@ -1,5 +1,7 @@
 # Ansible role: letsencrypt
 
+![.github/workflows/molecule.yml](https://github.com/AcroMedia/ansible-role-letsencrypt/workflows/.github/workflows/molecule.yml/badge.svg)
+
 For use on shared hosting servers. The role:
 - Installs LetsEncrypt,
 - Makes a `/.well-known/acme-challenge` virtual directory available to all virtual hosts on the server (including the default site), so all sites can regsiter and renew LE SSL certificates,
