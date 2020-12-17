@@ -4,39 +4,31 @@
   gather_facts: yes
   tasks:
 
-    - name: Update yum
+    - name: Update yum cache
       yum:
         update_cache: yes
       when: ansible_os_family == 'RedHat'
 
+    - name: Update cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
 
-    - name: Ensure python is installed
+    - name: Ensure python3 is installed
       package:
         name:
           - python3
         state: present
-      when: ansible_os_family == 'RedHat'
 
-    - name: Update cache
-      apt: update_cache=true cache_valid_time=600
-      changed_when: false
-      when: ansible_os_family == 'Debian'
-
-
-    - name: Ensure python is installed for Debian
-      apt: pkg=python3 state=present update_cache=true
+    - name: Ensure dirmngr is installed (required to install software from PPAs)
+      apt:
+        name: dirmngr
+        state: present
       when: ansible_os_family == 'Debian'
 
 - name:  Install role dependencies that acromedia.letsencrypt will need
   hosts: all
   become: yes
   gather_facts: yes
-
-  pre_tasks:
-    - name: Ensure dirmngr is installed
-      apt:
-        name: dirmngr
-        state: present
-      when: ansible_os_family == 'Debian'
   roles:
     - contrib/acromedia.nginx

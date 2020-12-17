@@ -1,0 +1,8 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Make sure certbot runs
+      command: /usr/local/bin/certbot-auto
