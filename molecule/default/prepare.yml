@@ -26,6 +26,12 @@
         state: present
       when: ansible_os_family == 'Debian'
 
+    - name: Ensure cron is installed
+      yum:
+        name: cronie
+        state: present
+      when: ansible_os_family == 'RedHat'
+
 - name:  Install role dependencies that acromedia.letsencrypt will need
   hosts: all
   become: yes
