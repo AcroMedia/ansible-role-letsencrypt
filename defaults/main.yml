@@ -26,3 +26,9 @@ letsencrypt_renew_cron_day: "*"
 letsencrypt_webroot: /var/www/letsencrypt
 
 letsencrypt_install_certbot_from_ppa: false
+
+# Since molecule tests cannot actually run with valid DNS, or even an incoming
+# connection on port 80, we need to be able to disable the automatic creattion
+# of the default site certificates. If you think you need to set this false
+# for any other purpose, you probably shouldn't be using letsencrypt at all.
+letsencrypt_create_default_server_cert: true

@@ -134,6 +134,7 @@
   when: default_cert_result is defined
     and default_cert_result.rc is defined
     and default_cert_result.rc != 0
+    and letsencrypt_create_default_server_cert
   environment:
     DEBIAN_FRONTEND: noninteractive
 
@@ -145,3 +146,4 @@
 
 - name: Run {{ letsencrypt_webserver }}_default_ssl.yml playbook
   include: "{{ letsencrypt_webserver }}_default_ssl.yml"
+  when: letsencrypt_create_default_server_cert
