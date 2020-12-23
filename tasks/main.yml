@@ -52,6 +52,12 @@
       state: absent
       update_cache: true
 
+  - name: Install LetsEncrypt
+    apt:
+      name: letsencrypt
+      state: present
+      update_cache: true
+
   - name: Remove certbot-auto when it's a symlink
     shell: if [ -h /usr/local/bin/certbot-auto ] ; then rm -v /usr/local/bin/certbot-auto; else true; fi
     register: rm_certbot_link_result
@@ -76,6 +82,7 @@
     name:
       - core
       - certbot
+  notify: "restart {{ letsencrypt_webserver }}"
   when: certbot_auto_file.stat.exists == false
 
 - name: Prepare the certbot command
