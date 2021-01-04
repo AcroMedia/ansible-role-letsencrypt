@@ -28,47 +28,47 @@
       apt:
         name:
           - snap
-  - name: Create symlink to old certbot path for AAW's benefit
-    file:
-      state: link
-      src: /usr/bin/certbot
-      dest: /usr/local/bin/certbot-auto
+    - name: Create symlink to old certbot path for AAW's benefit
+      file:
+        state: link
+        src: /usr/bin/certbot
+        dest: /usr/local/bin/certbot-auto
   when: ansible_distribution == 'Ubuntu'
     and letsencrypt_install_certbot_from_ppa == true
 
 - block:
-  - name: Remove obsolete PPA version of letsencrypt
-    apt:
-      name:
-        - letsencrypt
-        - certbot
-      state: absent
-      purge: false  # Do NOT remove config files
-      update_cache: true
+    - name: Remove obsolete PPA version of letsencrypt
+      apt:
+        name:
+          - letsencrypt
+          - certbot
+        state: absent
+        purge: false  # Do NOT remove config files
+        update_cache: true
 
-  - name: Remove obsolete Certbot PPA repo
-    apt_repository:
-      repo: ppa:certbot/certbot
-      state: absent
-      update_cache: true
+    - name: Remove obsolete Certbot PPA repo
+      apt_repository:
+        repo: ppa:certbot/certbot
+        state: absent
+        update_cache: true
 
-  - name: Install LetsEncrypt
-    apt:
-      name: letsencrypt
-      state: present
-      update_cache: true
+    - name: Install LetsEncrypt
+      apt:
+        name: letsencrypt
+        state: present
+        update_cache: true
 
-  - name: Remove certbot-auto when it's a symlink
-    shell: if [ -h /usr/local/bin/certbot-auto ] ; then rm -v /usr/local/bin/certbot-auto; else true; fi
-    register: rm_certbot_link_result
-    changed_when: "rm_certbot_link_result is defined
+    - name: Remove certbot-auto when it's a symlink
+      shell: if [ -h /usr/local/bin/certbot-auto ] ; then rm -v /usr/local/bin/certbot-auto; else true; fi
+      register: rm_certbot_link_result
+      changed_when: "rm_certbot_link_result is defined
       and rm_certbot_link_result.stdout is defined
       and 'removed' in rm_certbot_link_result.stdout"
 
-  - name: Purge obsolete certbot virtual environment
-    shell: rm -rf /opt/eff.org
-    when: rm_certbot_link_result is defined
-      and rm_certbot_link_result.changed
+    - name: Purge obsolete certbot virtual environment
+      shell: rm -rf /opt/eff.org
+      when: rm_certbot_link_result is defined
+        and rm_certbot_link_result.changed
 
   when: ansible_distribution == 'Ubuntu'
     and letsencrypt_install_certbot_from_ppa == false
@@ -88,14 +88,15 @@
 - name: Prepare the certbot command
   shell: ln -s /snap/bin/certbot /usr/bin/certbot
   when: certbot_auto_file.stat.exists == false
-- name: Download certbot-auto if it doesn't exist
-  get_url:
-    url: https://dl.eff.org/certbot-auto
-    # checksum="sha256:0103972f4d42704ff70ac855b502718fadf161925eaa7da16455fa55737c8887"
-    dest: /usr/local/bin/certbot-auto
-    mode: 0755
-  notify: "restart {{ letsencrypt_webserver }}"
-  when: certbot_auto_file.stat.exists == false
+
+
+
+- name: Install certbot nginx
+  apt:
+    name: python3-certbot-nginx
+    state: present
+    update_cache: true
+  when: ansible_distribution == 'Ubuntu'
 
 - name: Automatically update certbot-auto once a month with cron on Ubuntu
   cron:
@@ -129,15 +130,15 @@
 - name: Compose the certbot command string for the default site cert
   set_fact:
     certbot_command_string: >-
-      certbot --nginx
+      certbot --nginx --email {{ letsencrypt_expiry_email }} --agree-tos --non-interactive -d {{ default_site_fqdn }}
 
 - name: Create a cert for the default site (can take some time)
   shell: >
-    {{ certbot_command_string }} --dry-run && {{ certbot_command_string }}
+    {{ certbot_command_string }}
   register: certbot_result
-  when: default_cert_result is defined
-    and default_cert_result.exists is defined
-    and (not default_cert_result.exists)
+    # when: default_cert_result is defined
+    #  and default_cert_result.exists is defined
+    #  and (not default_cert_result.exists)
   environment:
     DEBIAN_FRONTEND: noninteractive
 
