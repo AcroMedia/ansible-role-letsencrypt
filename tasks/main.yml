@@ -138,7 +138,7 @@
     {{ certbot_command_string }}
   register: certbot_result
   when: default_cert_result is defined
-    and (not default_cert_result.exists)
+    and default_cert_result.stat.exists == false
   environment:
     DEBIAN_FRONTEND: noninteractive
 
