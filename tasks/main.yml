@@ -46,11 +46,11 @@
         purge: false  # Do NOT remove config files
         update_cache: true
 
-    - name: Remove obsolete Certbot PPA repo
-      apt_repository:
-        repo: ppa:certbot/certbot
-        state: absent
-        update_cache: true
+        #- name: Remove obsolete Certbot PPA repo
+        # apt_repository:
+        #  repo: ppa:certbot/certbot
+        # state: absent
+        #update_cache: true
 
     - name: Install LetsEncrypt
       apt:
@@ -89,27 +89,27 @@
   shell: ln -s /snap/bin/certbot /usr/bin/certbot
   when: certbot_auto_file.stat.exists == false
 
+- name: Add specified repository into sources list
+  apt_repository:
+    repo: ppa:certbot/certbot
+    state: present
+    update_cache: true
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version < '20'
 
+- name: Install certbot nginx for u16/u18
+  apt:
+    name: python-certbot-nginx
+    state: present
+    update_cache: true
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version < '20'
 
 - name: Install certbot nginx
   apt:
     name: python3-certbot-nginx
     state: present
     update_cache: true
-  when: ansible_distribution == 'Ubuntu'
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '20'
 
-- name: Automatically update certbot-auto once a month with cron on Ubuntu
-  cron:
-    name: "Update certbot-auto once a month"
-    minute: "0"
-    hour: "0"
-    day: "1"
-    job: >
-      /etc/crontab/certbot renew
-  tags:
-    - letsencrypt_cron
-  when: ansible_distribution == 'Ubuntu'
-    and letsencrypt_install_certbot_from_ppa == false
 
 - name: Create a destination for dhparams
   file:
@@ -126,7 +126,8 @@
   stat:
     path: "/etc/letsencrypt/live/{{ default_site_fqdn }}"
   register: default_cert_result
-
+- debug:
+    var: default_cert_result
 - name: Compose the certbot command string for the default site cert
   set_fact:
     certbot_command_string: >-
@@ -136,9 +137,8 @@
   shell: >
     {{ certbot_command_string }}
   register: certbot_result
-    # when: default_cert_result is defined
-    #  and default_cert_result.exists is defined
-    #  and (not default_cert_result.exists)
+  when: default_cert_result is defined
+    and (not default_cert_result.exists)
   environment:
     DEBIAN_FRONTEND: noninteractive
 
@@ -147,6 +147,20 @@
     path: "/etc/letsencrypt/live/{{ default_site_fqdn }}"
   register: default_cert_retest
 
-- name: Run {{ letsencrypt_webserver }}_default_ssl.yml playbook
+- name: Automatically update certbot-auto once a month with cron on Ubuntu
+  cron:
+    name: "Update certbot-auto once a month"
+    minute: "0"
+    hour: "0"
+    day: "1"
+    job: >
+      /etc/crontab/certbot renew
+  tags:
+    - letsencrypt_cron
+  when: ansible_distribution == 'Ubuntu'
+    and letsencrypt_install_certbot_from_ppa == false
+
+
+- name: Run {{ letsencrypt_webserver }}_default.ssl.yml.playbook
   include: "{{ letsencrypt_webserver }}_default_ssl.yml"
   when: not letsencrypt_molecule_mock_mode
