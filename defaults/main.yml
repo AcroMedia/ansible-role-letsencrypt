@@ -24,5 +24,3 @@ letsencrypt_renew_cron_hour: 7
 letsencrypt_renew_cron_day: "*"
 
 letsencrypt_webroot: /var/www/letsencrypt
-
-letsencrypt_install_certbot_from_ppa: false

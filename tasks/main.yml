@@ -24,24 +24,6 @@
     create: yes
 
 - block:
-  - name: Install Certbot PPA on U18
-    apt_repository:
-      repo: ppa:certbot/certbot
-      state: present
-  - name: Install LetsEncrypt on U18
-    apt:
-      name: letsencrypt
-      state: present
-      update_cache: true
-  - name: Create symlink to old certbot path for AAW's benefit
-    file:
-      state: link
-      src: /usr/bin/certbot
-      dest: /usr/local/bin/certbot-auto
-  when: ansible_distribution == 'Ubuntu'
-    and letsencrypt_install_certbot_from_ppa == true
-
-- block:
   - name: Remove obsolete PPA version of letsencrypt
     apt:
       name:
@@ -57,36 +39,48 @@
       state: absent
       update_cache: true
 
-  - name: Remove certbot-auto when it's a symlink
-    shell: if [ -h /usr/local/bin/certbot-auto ] ; then rm -v /usr/local/bin/certbot-auto; else true; fi
-    register: rm_certbot_link_result
-    changed_when: "rm_certbot_link_result is defined
-      and rm_certbot_link_result.stdout is defined
-      and 'removed' in rm_certbot_link_result.stdout"
-
   - name: Purge obsolete certbot virtual environment
-    shell: rm -rf /opt/eff.org
-    when: rm_certbot_link_result is defined
-      and rm_certbot_link_result.changed
+    file:
+      state: absent
+      path: /opt/eff.org/certbot
 
   when: ansible_distribution == 'Ubuntu'
-    and letsencrypt_install_certbot_from_ppa == false
 
-- name: Check if certbot-auto exists
-  stat: path=/usr/local/bin/certbot-auto
+- name: Check if old certbot-auto exists
+  stat:
+    path: /usr/local/bin/certbot-auto
   register: certbot_auto_file
 
-- name: Download certbot-auto if it doesn't exist
-  get_url:
-    url: https://dl.eff.org/certbot-auto
-    # checksum="sha256:0103972f4d42704ff70ac855b502718fadf161925eaa7da16455fa55737c8887"
-    dest: /usr/local/bin/certbot-auto
-    mode: 0755
-  notify: "restart {{ letsencrypt_webserver }}"
-  when: certbot_auto_file.stat.exists == false
+- name: debug certbot_auto_file
+  debug:
+    var: certbot_auto_file
 
-- name: Automatically update certbot-auto once a month with cron on Ubuntu
+- name: Remove old certbot-auto when its not just a symlink
+  shell: >
+    if [ -f /usr/local/bin/certbot-auto ] && [ ! -L /usr/local/bin/certbot-auto ]; then
+      rm /usr/local/bin/certbot-auto;
+    fi
+  when: certbot_auto_file.stat.exists
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Install certbot snap package
+  snap:
+    name: certbot
+    classic: true
+  notify: "restart {{ letsencrypt_webserver }}"
+
+- name: Create links to the new snap binary for use by legacy apps
+  file:
+    state: link
+    src: /snap/bin/certbot
+    dest: "{{ item }}"
+  with_items:
+    - /usr/local/bin/certbot-auto
+    - /usr/bin/certbot
+
+- name: Remove old certbot-update job. Snaps update automatically.
   cron:
+    state: absent
     name: "Update certbot-auto once a month"
     minute: "0"
     hour: "0"
@@ -97,7 +91,6 @@
   tags:
     - letsencrypt_cron
   when: ansible_distribution == 'Ubuntu'
-    and letsencrypt_install_certbot_from_ppa == false
 
 - name: Create a destination for dhparams
   file:
@@ -119,7 +112,7 @@
 - name: Compose the certbot command string for the default site cert
   set_fact:
     certbot_command_string: >-
-      /usr/local/bin/certbot-auto certonly
+      /snap/bin/certbot certonly
       --non-interactive
       --agree-tos
       --email {{ default_mail_recipient }}

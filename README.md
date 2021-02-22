@@ -1,7 +1,7 @@
 # Ansible role: letsencrypt
 
 For use on shared hosting servers. The role:
-- Installs LetsEncrypt,
+- Installs certbot from LetsEncrypt (snapd version),
 - Makes a `/.well-known/acme-challenge` virtual directory available to all virtual hosts on the server (including the default site), so all sites can regsiter and renew LE SSL certificates,
 - Overwrites the default site config (after backing up the original), so it can be served with a valid LetsEncrypt certificate instead of the default snakeoil certificate.
 
@@ -9,7 +9,8 @@ As an added bonus, after this role is installed, you won't need to create new vi
 
 ## Requirements
 
-- (NGINX or Apache 2) on (Ubuntu >= 14.04 or CentOS/RedHat >= 6)
+- Snapd + core must already be working
+- (NGINX or Apache 2) on (Ubuntu >= 16.04 or CentOS/RedHat >= 7)
 - Working DNS: The cert name you're registering must resolve to the machine you're registering the cert from
 - A working fully qualified host name: If `hostname -f` on the machine doesn't correctly resolve to the machine from the outside world, you need to either fix it, or override it with one that does resolve with `default_site_fqdn` from your playbook instead.
 
@@ -31,14 +32,10 @@ As an added bonus, after this role is installed, you won't need to create new vi
 
     Control what time the server attempts LE certificate renewal. These default to `5`, `7`, and `*`, respectively (ie. 7:05 AM daily, local server time).
 
-- **letsencrypt_install_certbot_from_ppa**
-
-  Defaults to `false`, is only relevant to Debian/Ubuntu servers, and only exists here for legacy/compatibility purposes. Normally, installation of the self-updating script (the default behaviour) is the best choice in all scenarios.
-
 
 ## Dependencies
 
-None
+- [acromedia.nginx](https://github.com/AcroMedia/ansible-role-nginx)
 
 ## Example Playbook
 
