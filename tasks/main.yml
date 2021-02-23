@@ -46,22 +46,15 @@
 
   when: ansible_distribution == 'Ubuntu'
 
-- name: Check if old certbot-auto exists
-  stat:
-    path: /usr/local/bin/certbot-auto
-  register: certbot_auto_file
+- name: Remove old "certbot-auto" scripts or symlinks; it won't work any more. The new snap version is just a symlink to the snap binary, and the name "certbot-auto" won't be recognized as a valid app. Legacy apps will need to call certbot instead.
+  file:
+    dest: /usr/local/bin/certbot-auto
+    state: absent
 
-- name: debug certbot_auto_file
-  debug:
-    var: certbot_auto_file
-
-- name: Remove old certbot-auto when its not just a symlink
-  shell: >
-    if [ -f /usr/local/bin/certbot-auto ] && [ ! -L /usr/local/bin/certbot-auto ]; then
-      rm /usr/local/bin/certbot-auto;
-    fi
-  when: certbot_auto_file.stat.exists
-  ignore_errors: "{{ ansible_check_mode }}"
+- name: Remove old "certbot" script or symlink, just in case it wasn't removed by apt.
+  file:
+    dest: /usr/bin/certbot
+    state: absent
 
 - name: Install certbot snap package
   snap:
@@ -69,28 +62,10 @@
     classic: true
   notify: "restart {{ letsencrypt_webserver }}"
 
-- name: Create links to the new snap binary for use by legacy apps
-  file:
-    state: link
-    src: /snap/bin/certbot
-    dest: "{{ item }}"
-  with_items:
-    - /usr/local/bin/certbot-auto
-    - /usr/bin/certbot
-
 - name: Remove old certbot-update job. Snaps update automatically.
   cron:
     state: absent
     name: "Update certbot-auto once a month"
-    minute: "0"
-    hour: "0"
-    day: "1"
-    # The sed commands after the certbot script keep this job quiet when there is no upgrade and there are no errors.
-    job: >
-      /usr/local/bin/certbot-auto --version 2>&1 | /bin/sed -r 's/^certbot ([0-9]+)(\.[0-9]+)+$//' |/bin/sed '/^\s*$/d'
-  tags:
-    - letsencrypt_cron
-  when: ansible_distribution == 'Ubuntu'
 
 - name: Create a destination for dhparams
   file:
