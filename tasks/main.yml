@@ -71,7 +71,7 @@
   file:
     path: "/usr/local/ssl/private"
     state: directory
-    mode: 0700
+    mode: "2750"
 
 - name: Create dhparams.pem (can take several minutes)
   shell: umask 077 && openssl dhparam -out /usr/local/ssl/private/dhparams.pem 2048
