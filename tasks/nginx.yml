@@ -49,6 +49,6 @@
     minute: "{{ letsencrypt_renew_cron_minute }}"
     day: "{{ letsencrypt_renew_cron_day }}"
     hour: "{{ letsencrypt_renew_cron_hour }}"
-    job: "/usr/local/bin/certbot-auto renew --quiet --no-self-upgrade --webroot-path {{ letsencrypt_webroot }} && /usr/sbin/nginx -tq && {{ service_binary }} nginx reload > /dev/null"
+    job: "/snap/bin/certbot renew --quiet --webroot-path {{ letsencrypt_webroot }} && /usr/sbin/nginx -tq && {{ service_binary }} nginx reload > /dev/null"
   tags:
     - letsencrypt_cron

@@ -6,3 +6,4 @@
     backup: yes
   notify: reload nginx
   when: default_cert_retest.rc == 0
+  ignore_errors: "{{ ansible_check_mode }}"
