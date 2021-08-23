@@ -31,13 +31,13 @@
         - certbot
       state: absent
       purge: false  # Do NOT remove config files
-      update_cache: true
+      update_cache: false  # We're not installing anything new. There's no need to refresh this.
 
   - name: Remove obsolete Certbot PPA repo
     apt_repository:
       repo: ppa:certbot/certbot
       state: absent
-      update_cache: true
+      update_cache: false  # We're not installing anything new. There's no need to refresh this.
 
   - name: Purge obsolete certbot virtual environment
     file:
