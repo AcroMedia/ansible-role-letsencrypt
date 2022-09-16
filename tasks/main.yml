@@ -10,39 +10,42 @@
 - name: Run {{ letsencrypt_webserver }}.yml playbook
   include: "{{ letsencrypt_webserver }}.yml"
 
-- name: Create the acme-challenge dir
-  file:
-    path: "{{ letsencrypt_webroot }}/.well-known/acme-challenge"
-    state: directory
-  notify: "restart {{ letsencrypt_webserver }}"
+- block:
+    - name: Create the acme-challenge dir
+      file:
+        path: "{{ letsencrypt_webroot }}/.well-known/acme-challenge"
+        state: directory
+      notify: "restart {{ letsencrypt_webserver }}"
 
-- name: Be able to ping the challenge dir
-  lineinfile:
-    dest: "{{ letsencrypt_webroot }}/.well-known/acme-challenge/ping"
-    state: present
-    line: pong
-    create: yes
+    - name: Be able to ping the challenge dir
+      lineinfile:
+        dest: "{{ letsencrypt_webroot }}/.well-known/acme-challenge/ping"
+        state: present
+        line: pong
+        create: yes
+
+  when: letsencrypt_webserver != 'none'
 
 - block:
-  - name: Remove obsolete PPA version of letsencrypt
-    apt:
-      name:
-        - letsencrypt
-        - certbot
-      state: absent
-      purge: false  # Do NOT remove config files
-      update_cache: false  # We're not installing anything new. There's no need to refresh this.
+    - name: Remove obsolete PPA version of letsencrypt
+      apt:
+        name:
+          - letsencrypt
+          - certbot
+        state: absent
+        purge: false  # Do NOT remove config files
+        update_cache: false  # We're not installing anything new. There's no need to refresh this.
 
-  - name: Remove obsolete Certbot PPA repo
-    apt_repository:
-      repo: ppa:certbot/certbot
-      state: absent
-      update_cache: false  # We're not installing anything new. There's no need to refresh this.
+    - name: Remove obsolete Certbot PPA repo
+      apt_repository:
+        repo: ppa:certbot/certbot
+        state: absent
+        update_cache: false  # We're not installing anything new. There's no need to refresh this.
 
-  - name: Purge obsolete certbot virtual environment
-    file:
-      state: absent
-      path: /opt/eff.org/certbot
+    - name: Purge obsolete certbot virtual environment
+      file:
+        state: absent
+        path: /opt/eff.org/certbot
 
   when: ansible_distribution == 'Ubuntu'
 
@@ -67,49 +70,54 @@
     state: absent
     name: "Update certbot-auto once a month"
 
-- name: Create a destination for dhparams
-  file:
-    path: "/usr/local/ssl/private"
-    state: directory
-    mode: "2750"
+- block:
+    - name: Create a destination for dhparams
+      file:
+        path: "/usr/local/ssl/private"
+        state: directory
+        mode: "2750"
 
-- name: Create dhparams.pem (can take several minutes)
-  shell: umask 077 && openssl dhparam -out /usr/local/ssl/private/dhparams.pem 2048
-  args:
-    creates: /usr/local/ssl/private/dhparams.pem
+    - name: Create dhparams.pem (can take several minutes)
+      shell: umask 077 && openssl dhparam -out /usr/local/ssl/private/dhparams.pem 2048
+      args:
+        creates: /usr/local/ssl/private/dhparams.pem
+  when: letsencrypt_webserver != 'none'
 
-- name: Stat the default site SSL cert
-  shell: "test -e /etc/letsencrypt/live/{{ default_site_fqdn }}"
-  register: default_cert_result
-  changed_when: "default_cert_result.rc != 0"
-  ignore_errors: true
+- block:
+    - name: Stat the default site SSL cert
+      shell: "test -e /etc/letsencrypt/live/{{ default_site_fqdn }}"
+      register: default_cert_result
+      changed_when: "default_cert_result.rc != 0"
+      ignore_errors: true
 
-- name: Compose the certbot command string for the default site cert
-  set_fact:
-    certbot_command_string: >-
-      /snap/bin/certbot certonly
-      --non-interactive
-      --agree-tos
-      --email {{ default_mail_recipient }}
-      --webroot
-      --webroot-path {{ letsencrypt_webroot }}
-      --domains {{ default_site_fqdn }}
+    - name: Compose the certbot command string for the default site cert
+      set_fact:
+        certbot_command_string: >-
+          /snap/bin/certbot certonly
+          --non-interactive
+          --agree-tos
+          --email {{ default_mail_recipient }}
+          --webroot
+          --webroot-path {{ letsencrypt_webroot }}
+          --domains {{ default_site_fqdn }}
 
-- name: Create a cert for the default site (can take some time)
-  shell: >
-    {{ certbot_command_string }} --dry-run && {{ certbot_command_string }}
-  register: certbot_result
-  when: default_cert_result is defined
-    and default_cert_result.rc is defined
-    and default_cert_result.rc != 0
-  environment:
-    DEBIAN_FRONTEND: noninteractive
+    - name: Create a cert for the default site (can take some time)
+      shell: >
+        {{ certbot_command_string }} --dry-run && {{ certbot_command_string }}
+      register: certbot_result
+      when: default_cert_result is defined
+        and default_cert_result.rc is defined
+        and default_cert_result.rc != 0
+      environment:
+        DEBIAN_FRONTEND: noninteractive
 
-- name: Re-stat default site SSL cert
-  shell: "test -e /etc/letsencrypt/live/{{ default_site_fqdn }}"
-  register: default_cert_retest
-  ignore_errors: true
-  changed_when: default_cert_retest.rc != default_cert_result.rc
+    - name: Re-stat default site SSL cert
+      shell: "test -e /etc/letsencrypt/live/{{ default_site_fqdn }}"
+      register: default_cert_retest
+      ignore_errors: true
+      changed_when: default_cert_retest.rc != default_cert_result.rc
+
+  when: letsencrypt_create_default_server_cert | default(true)
 
 - name: Run {{ letsencrypt_webserver }}_default_ssl.yml playbook
   include: "{{ letsencrypt_webserver }}_default_ssl.yml"

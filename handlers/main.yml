@@ -3,11 +3,21 @@
   service:
     name: "{{ apache2_name }}"
     state: restarted
+
 - name: reload nginx
   service:
     name: nginx
     state: reloaded
+
 - name: restart nginx
   service:
     name: nginx
     state: restarted
+
+- name: restart none
+  debug:
+    msg: This handler is a no-op; letsencrypt_webserver is set to 'none'.
+
+- name: reload none
+  debug:
+    msg: This handler is a no-op; letsencrypt_webserver is set to 'none'.
