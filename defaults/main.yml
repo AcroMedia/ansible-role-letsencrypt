@@ -12,8 +12,13 @@ apache_auth: |
 apache_dhparams: SSLOpenSSLConfCmd DHParameters /usr/local/ssl/private/dhparams.pem
 apache_ssl_line: SSLEngine on
 
-# In some edge cases, ansible_fqdn may doesn't return what we expect, so this lets us override it.
-default_site_fqdn: "{{ ansible_fqdn }}"   # in most cases, this is the same as $(hostname -f)
+# The role tries to create a certificate for $(hostname -f) by default.
+letsencrypt_create_default_server_cert: true
+
+# If `ansible_fqdn` doesn't resolve to working DNS name, override it with this
+letsencrypt_default_site_fqdn: "{{ ansible_fqdn }}"   # in most cases, this is the same as $(hostname -f)
+default_site_fqdn: "{{ letsencrypt_default_site_fqdn }}"   # legacy var name
+
 
 
 http_port: 80
