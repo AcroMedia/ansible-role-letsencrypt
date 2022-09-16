@@ -7,6 +7,8 @@ Assuming the above is true, the default behaviour of the role is to:
 - Make a `/.well-known/acme-challenge` virtual directory, which is automatically available to all the virtual hosts on the server (including the default site), so all sites can register and renew LE SSL certificates without extra configuration,
 - Overwrite the default site config (after backing up the original), so it can be served with a valid LetsEncrypt certificate instead of the default snakeoil certificate.
 
+After this role is installed using its default configuration, you won't need to create any (additional) virtual hosts to register new LetsEncrypt certificates. Since the default site is already a catch-all, as long as DNS points at your server for the name you need a certificate for, you can register a certificate for it using certbot's `webroot` method.
+
 ## Requirements
 
 ###### In all cases:
@@ -37,6 +39,13 @@ Assuming the above is true, the default behaviour of the role is to:
 
     These variable names are a inaccurate now, but they're still used to control what time the server ~~attempts LE certificate renewal~~ reloads your web service. These default to `5`, `7`, and `*`, respectively (ie. 7:05 AM daily, local server time). The snap version of letsencrypt renews certs automatically without the need for a cron job, but your web server will won't pick up the new versions of those certificates without being reloaded.
 
+- **letsencrypt_create_default_server_cert**
+
+  Boolean (`true`) by default. The role will attempt to create a certificate for `$(hostname -f)` unless you set this to `false`.
+
+- **letsencrypt_webroot**
+
+  String, defaults to `/var/www/letsencrypt`. The physical directory for certbot to create acme challenge files in. Each virtual host's `/.well-known/acme-challenge` location maps to `{{ letsencrypt_webroot }}/.well-known/acme-challenge`.
 
 ## Dependencies
 
