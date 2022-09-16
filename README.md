@@ -1,24 +1,29 @@
 # Ansible role: letsencrypt
 
-For use on shared hosting servers. The role:
-- Installs certbot from LetsEncrypt (snapd version),
-- Makes a `/.well-known/acme-challenge` virtual directory available to all virtual hosts on the server (including the default site), so all sites can regsiter and renew LE SSL certificates,
-- Overwrites the default site config (after backing up the original), so it can be served with a valid LetsEncrypt certificate instead of the default snakeoil certificate.
+This role was designed to work with [acromedia.nginx](https://github.com/AcroMedia/ansible-role-nginx) and [acromedia.nginx](https://github.com/AcroMedia/ansible-role-virtual-host), but it is possible to use it only install certbot if you set your vars as in the example bare-bones playbook below.
 
-As an added bonus, after this role is installed, you won't need to create new virtual hosts to register new LetsEncrypt certificates. Since the default site acts as a catch-all, as long as DNS points at your server, you can register a certificate for that name.
+Assuming the above is true, the default behaviour of the role is to:
+- Install certbot from LetsEncrypt (snapd version),
+- Make a `/.well-known/acme-challenge` virtual directory, which is automatically available to all the virtual hosts on the server (including the default site), so all sites can register and renew LE SSL certificates without extra configuration,
+- Overwrite the default site config (after backing up the original), so it can be served with a valid LetsEncrypt certificate instead of the default snakeoil certificate.
 
 ## Requirements
 
+###### In all cases:
 - Snapd + core must already be working
+- Working DNS: LetsEncrypt uses DNS validation. Any certificate name you're registering must resolve to the machine you're registering the cert from.
+
+###### When `letsencrypt_webserver` is not `none`:
 - (NGINX or Apache 2) on (Ubuntu >= 16.04 or CentOS/RedHat >= 7)
-- Working DNS: The cert name you're registering must resolve to the machine you're registering the cert from
-- A working fully qualified host name: If `hostname -f` on the machine doesn't correctly resolve to the machine from the outside world, you need to either fix it, or override it with one that does resolve with `default_site_fqdn` from your playbook instead.
+
+###### When: `letsencrypt_create_default_server_cert` is `true` (the default):
+- A working fully qualified host name, OR, that you specify `letsencrypt_default_site_fqdn` as a dns name that does correctly. If `hostname -f` on the machine doesn't correctly resolve to the machine from the outside world, you need to either fix the hostname, or override it with one that does resolve by specifying a valid `default_site_fqdn` from your playbook instead.
 
 ## Role Variables
 
 - **letsencrypt_webserver**
 
-  The brand of web server that's installed on the server. Defaults to `nginx`. Can be either `nginx` or `apache`.
+  The brand of web server that's installed on the server. Defaults to `nginx`. Can be one of: `nginx`, `apache`, or `none`.
 
 - **http_port**
 
@@ -30,22 +35,43 @@ As an added bonus, after this role is installed, you won't need to create new vi
 
 - **letsencrypt_renew_cron_minute**, **letsencrypt_renew_cron_hour**, **letsencrypt_renew_cron_day**
 
-    Control what time the server attempts LE certificate renewal. These default to `5`, `7`, and `*`, respectively (ie. 7:05 AM daily, local server time).
+    These variable names are a inaccurate now, but they're still used to control what time the server ~~attempts LE certificate renewal~~ reloads your web service. These default to `5`, `7`, and `*`, respectively (ie. 7:05 AM daily, local server time). The snap version of letsencrypt renews certs automatically without the need for a cron job, but your web server will won't pick up the new versions of those certificates without being reloaded.
 
 
 ## Dependencies
 
-- [acromedia.nginx](https://github.com/AcroMedia/ansible-role-nginx)
+* [acromedia.nginx](https://github.com/AcroMedia/ansible-role-nginx) when `letsencrypt_webserver: nginx` (the default), or
+* none, when `letsencrypt_webserver: none`.
 
-## Example Playbook
+## Example Playbooks
 
-    - hosts: servers
-      roles:
-        - role: acromedia.letsencrypt
-          vars:
-            letsencrypt_webserver: nginx
-            http_port: 80
-            https_port: 443
+#### Normal scenario
+```yaml
+- hosts: simple_web_servers
+  roles:
+    - role: acromedia.nginx
+    - role: acromedia.letsencrypt
+      vars:
+        letsencrypt_default_site_fqdn: host-id.example.com
+        letsencrypt_webserver: nginx
+        http_port: 80
+        https_port: 443
+    - role: acromedia.virtual-host
+      # ... etc etc etc
+
+```
+
+#### **Only** install certbot
+
+```yaml
+- hosts: some_other_specialized_group
+  roles:
+    - role: acromedia.letsencrypt
+      vars:
+        letsencrypt_webserver: none
+        letsencrypt_create_default_server_cert: false
+```
+
 
 
 ## License
