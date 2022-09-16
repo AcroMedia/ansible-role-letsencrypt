@@ -2,7 +2,7 @@
 
 This role was designed to work with [acromedia.nginx](https://github.com/AcroMedia/ansible-role-nginx) and [acromedia.nginx](https://github.com/AcroMedia/ansible-role-virtual-host), but it is possible to use it only install certbot if you set your vars as in the example bare-bones playbook below.
 
-Assuming the above is true, the default behaviour of the role is to:
+Assuming the above scenario is being used, the default behaviour of the role is to:
 - Install certbot from LetsEncrypt (snapd version),
 - Make a `/.well-known/acme-challenge` virtual directory, which is automatically available to all the virtual hosts on the server (including the default site), so all sites can register and renew LE SSL certificates without extra configuration,
 - Overwrite the default site config (after backing up the original), so it can be served with a valid LetsEncrypt certificate instead of the default snakeoil certificate.
