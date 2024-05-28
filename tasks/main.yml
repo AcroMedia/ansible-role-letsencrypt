@@ -8,7 +8,7 @@
 - include_vars: "vars/{{ ansible_os_family }}.yml"
 
 - name: Run {{ letsencrypt_webserver }}.yml playbook
-  include: "{{ letsencrypt_webserver }}.yml"
+  import_tasks: "{{ letsencrypt_webserver }}.yml"
 
 - block:
     - name: Create the acme-challenge dir
@@ -120,4 +120,4 @@
   when: letsencrypt_create_default_server_cert | default(true)
 
 - name: Run {{ letsencrypt_webserver }}_default_ssl.yml playbook
-  include: "{{ letsencrypt_webserver }}_default_ssl.yml"
+  import_tasks: "{{ letsencrypt_webserver }}_default_ssl.yml"
