@@ -11,6 +11,7 @@ galaxy_info:
     - xenial
     - bionic
     - focal
+    - noble
   - name: EL
     versions:
     - 7
