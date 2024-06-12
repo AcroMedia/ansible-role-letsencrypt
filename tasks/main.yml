@@ -100,6 +100,7 @@
           --webroot
           --webroot-path {{ letsencrypt_webroot }}
           --domains {{ default_site_fqdn }}
+          {{ letsencrypt_staging | ternary('--test-cert', '') }}
 
     - name: Create a cert for the default site (can take some time)
       shell: >

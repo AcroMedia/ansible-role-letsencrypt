@@ -1,0 +1,25 @@
+---
+- name: Check whether letsencrypt ran properly
+  hosts: all
+  become: yes
+
+  tasks:
+    - include_vars: "vars/{{ ansible_os_family }}.yml"
+
+    - name: Check if certbot was installed
+      command: certbot --version
+      register: certbot_installed
+
+    - name: Assert that certbot --version was successful
+      assert:
+        that: certbot_installed.rc == 0
+        msg: "certbot --version failed"
+
+    # Check that the acme-challenge directory exists
+    - name: Check if acme-challenge directory exists
+      stat:
+        path: "{{ letsencrypt_webroot }}/.well-known/acme-challenge"
+
+    - name: Stat default site SSL cert
+      shell: "test -e /etc/letsencrypt/live/{{ default_site_fqdn }}"
+        
