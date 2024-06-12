@@ -47,6 +47,10 @@ After this role is installed using its default configuration, you won't need to 
 
   String, defaults to `/var/www/letsencrypt`. The physical directory for certbot to create acme challenge files in. Each virtual host's `/.well-known/acme-challenge` location maps to `{{ letsencrypt_webroot }}/.well-known/acme-challenge`.
 
+- **letsencrypt_staging**
+
+  Boolean (`false`) by default. If set to `true`, certbot will use the LetsEncrypt staging server instead of the production server. This is useful for testing, as the staging server has much higher rate limits.
+
 ## Dependencies
 
 * [acromedia.nginx](https://github.com/AcroMedia/ansible-role-nginx) when `letsencrypt_webserver: nginx` (the default), or

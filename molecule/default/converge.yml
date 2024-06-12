@@ -1,0 +1,37 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    default_mail_recipient: admin@example.com
+    letsencrypt_staging: true
+
+  pre_tasks:
+    - name: Install NGINX
+      package:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Install snapd
+      package:
+        name: snapd
+        state: present
+
+    - name: Ensure snapd is running
+      service:
+        name: snapd
+        state: started
+        enabled: yes
+
+    - name: Ensure udev is running
+      service:
+        name: udev
+        state: started
+        enabled: yes
+
+    - name: Update snap
+      shell: snap install core; snap refresh core
+
+  roles:
+    - role: ansible-role-letsencrypt
