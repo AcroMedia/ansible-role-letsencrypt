@@ -22,8 +22,8 @@ server {
   ssl_certificate /etc/letsencrypt/live/{{ default_site_fqdn }}/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/{{ default_site_fqdn }}/privkey.pem;
   ssl_dhparam /usr/local/ssl/private/dhparams.pem;
-  ssl_protocols {{ le_nginx_ssl_protocols_default | join (' ')}};
-  ssl_ciphers '{{ le_nginx_ssl_ciphers_default | join(':') }}';
+  ssl_protocols {{ le_nginx_ssl_protocols | default(le_nginx_ssl_protocols_default) | join (' ')}};
+  ssl_ciphers '{{ le_nginx_ssl_ciphers | default(le_nginx_ssl_ciphers_default) | join(':') }}';
   ssl_prefer_server_ciphers on;
   #  # HSTS (ngx_http_headers_module is required) (15768000 seconds = 6 months)
   ## Don't enable this unless you know what it does, and what the downside will be if you have to serve plain HTTP at some point.
